@@ -1,6 +1,14 @@
 # Nushell Environment Config File
 #
-# version = "0.93.1"
+# version = "0.94.1"
+$env.STARSHIP_SHELL = "nu"
+# set  ~/.config/starship/starship.toml nushell config
+$env.STARSHIP_CONFIG =  ($env.USERPROFILE | path join '.config' 'starship' 'starship.toml')
+
+# starship prompt
+# def create_left_prompt [] {
+#     starship prompt --cmd-duration $env.CMD_DURATION_MS $'--status=($env.LAST_EXIT_CODE)'
+# }
 
 def create_left_prompt [] {
     let dir = match (do --ignore-shell-errors { $env.PWD | path relative-to $nu.home-path }) {
@@ -98,3 +106,14 @@ $env.NU_PLUGIN_DIRS = [
 
 # To load from a custom file you can use:
 # source ($nu.default-config-dir | path join 'custom.nu')
+if not (which fnm | is-empty) {
+    ^fnm env --json | from json | load-env
+    # Checking `Path` for Windows
+    let path = if 'Path' in $env { $env.Path } else { $env.PATH }
+    let node_path = if (sys host).name == 'Windows' {
+        $"($env.FNM_MULTISHELL_PATH)"
+    } else {
+        $"($env.FNM_MULTISHELL_PATH)/bin"
+    }
+    $env.PATH = ($path | prepend [ $node_path ])
+}
